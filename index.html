@@ -98,7 +98,7 @@
             gap: 8px;
         }
         .name-row input {
-            width: 60%;   /* Уже, чем раньше */
+            width: 60%;
             padding: 8px 15px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(0, 255, 255, 0.4);
@@ -123,7 +123,7 @@
             color: #fff;
             resize: none;
             outline: none;
-            height: 70px;   /* Выше */
+            height: 70px;
             transition: 0.3s;
             font-family: inherit;
         }
@@ -229,11 +229,7 @@
 
     async function loadApproved() {
         try {
-            const res = await fetch(API, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_approved' })
-            });
+            const res = await fetch(API + '?path=/get_approved');
             const messages = await res.json();
             const chat = document.getElementById('chat');
             chat.innerHTML = '';
@@ -261,10 +257,10 @@
             return;
         }
         try {
-            const res = await fetch(API, {
+            const res = await fetch(API + '?path=/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'send', name, text })
+                body: JSON.stringify({ name, text })
             });
             if (res.ok) {
                 statusEl.textContent = 'Отправлено на проверку';
