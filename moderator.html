@@ -5,52 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Модерация чата</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; }
-        .msg { border: 1px solid #ddd; padding: 10px; margin: 10px 0; background: #f9f9f9; }
-        button { margin-right: 5px; padding: 5px 10px; }
-        input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background: #1a1a2e; color: #e0e0e0; }
+        .msg { border: 1px solid #00e5ff44; padding: 10px; margin: 10px 0; background: #16213e; border-radius: 12px; }
+        button { margin-right: 5px; padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .approve-btn { background: #00e5ff; color: #000; }
+        .reject-btn { background: #ff4477; color: #fff; }
+        button:hover { opacity: 0.8; transform: scale(1.02); }
+        input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; background: #16213e; border: 1px solid #00e5ff44; color: #fff; border-radius: 20px; }
         #login, #panel { display: none; }
         .active { display: block !important; }
     </style>
 </head>
 <body>
-    <h2>Модерация чата</h2>
+    <h2>🔒 Модерация чата</h2>
 
     <div id="login" class="active">
         <p>Введите пароль модератора</p>
         <input type="password" id="password" placeholder="Пароль">
         <button onclick="login()">Войти</button>
-        <p id="loginError" style="color:red"></p>
+        <p id="loginError" style="color:#ff4477"></p>
     </div>
 
     <div id="panel">
-        <button onclick="logout()">Выйти</button>
+        <button onclick="logout()" style="background:#333; color:#fff;">Выйти</button>
         <h3>Сообщения на проверку:</h3>
         <div id="pendingList"></div>
     </div>
 
     <script>
-        // Адрес вашей функции — уже подставлен
         const API = 'https://functions.yandexcloud.net/d4esbgem029443pgug0u';
         let PASSWORD = '';
 
-        function login() {
-            PASSWORD = document.getElementById('password').value;
+        async function login() {
+            PASSWORD = document.getElementById('password').value.trim();
             if (!PASSWORD) return;
-            fetch(API + '?path=/get_pending', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: PASSWORD })
-            })
-            .then(res => {
+            try {
+                const res = await fetch(API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Action': 'get_pending'
+                    },
+                    body: JSON.stringify({ password: PASSWORD })
+                });
                 if (res.ok) {
                     document.getElementById('login').classList.remove('active');
                     document.getElementById('panel').classList.add('active');
                     loadPending();
                 } else {
-                    document.getElementById('loginError').textContent = 'Неверный пароль';
+                    const err = await res.text();
+                    document.getElementById('loginError').textContent = 'Неверный пароль (ошибка ' + res.status + ')';
                 }
-            });
+            } catch (e) {
+                document.getElementById('loginError').textContent = 'Ошибка соединения';
+            }
         }
 
         function logout() {
@@ -61,41 +69,53 @@
         }
 
         async function loadPending() {
-            const res = await fetch(API + '?path=/get_pending', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: PASSWORD })
-            });
-            const messages = await res.json();
-            const list = document.getElementById('pendingList');
-            list.innerHTML = '';
-            messages.forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'msg';
-                div.id = 'msg-' + msg.id;
-                div.innerHTML = `
-                    <strong>${escapeHtml(msg.name)}</strong><br>
-                    ${escapeHtml(msg.text)}<br>
-                    <button onclick="approve('${msg.id}')">Одобрить</button>
-                    <button onclick="reject('${msg.id}')">Отклонить</button>
-                `;
-                list.appendChild(div);
-            });
+            try {
+                const res = await fetch(API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Action': 'get_pending'
+                    },
+                    body: JSON.stringify({ password: PASSWORD })
+                });
+                if (!res.ok) { logout(); return; }
+                const messages = await res.json();
+                const list = document.getElementById('pendingList');
+                list.innerHTML = '';
+                messages.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'msg';
+                    div.id = 'msg-' + msg.id;
+                    div.innerHTML = `
+                        <strong>${escapeHtml(msg.name)}</strong><br>
+                        ${escapeHtml(msg.text)}<br>
+                        <button class="approve-btn" onclick="approve('${msg.id}')">✅ Одобрить</button>
+                        <button class="reject-btn" onclick="reject('${msg.id}')">❌ Отклонить</button>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch(e) {}
         }
 
         async function approve(id) {
-            await fetch(API + '?path=/approve', {
+            await fetch(API, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Action': 'approve'
+                },
                 body: JSON.stringify({ id, password: PASSWORD })
             });
             document.getElementById('msg-' + id)?.remove();
         }
 
         async function reject(id) {
-            await fetch(API + '?path=/reject', {
+            await fetch(API, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Action': 'reject'
+                },
                 body: JSON.stringify({ id, password: PASSWORD })
             });
             document.getElementById('msg-' + id)?.remove();
