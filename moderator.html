@@ -38,10 +38,10 @@
             PASSWORD = document.getElementById('password').value.trim();
             if (!PASSWORD) return;
             try {
-                const res = await fetch(API, {
+                const res = await fetch(API + '?path=/get_pending', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'get_pending', password: PASSWORD })
+                    body: JSON.stringify({ password: PASSWORD })
                 });
                 if (res.ok) {
                     document.getElementById('login').classList.remove('active');
@@ -64,10 +64,10 @@
 
         async function loadPending() {
             try {
-                const res = await fetch(API, {
+                const res = await fetch(API + '?path=/get_pending', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'get_pending', password: PASSWORD })
+                    body: JSON.stringify({ password: PASSWORD })
                 });
                 if (!res.ok) { logout(); return; }
                 const messages = await res.json();
@@ -89,19 +89,19 @@
         }
 
         async function approve(id) {
-            await fetch(API, {
+            await fetch(API + '?path=/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'approve', id, password: PASSWORD })
+                body: JSON.stringify({ id, password: PASSWORD })
             });
             document.getElementById('msg-' + id)?.remove();
         }
 
         async function reject(id) {
-            await fetch(API, {
+            await fetch(API + '?path=/reject', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'reject', id, password: PASSWORD })
+                body: JSON.stringify({ id, password: PASSWORD })
             });
             document.getElementById('msg-' + id)?.remove();
         }
