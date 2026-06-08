@@ -18,14 +18,12 @@
 </head>
 <body>
     <h2>🔒 Модерация чата</h2>
-
     <div id="login" class="active">
         <p>Введите пароль модератора</p>
         <input type="password" id="password" placeholder="Пароль">
         <button onclick="login()">Войти</button>
         <p id="loginError" style="color:#ff4477"></p>
     </div>
-
     <div id="panel">
         <button onclick="logout()" style="background:#333; color:#fff;">Выйти</button>
         <h3>Сообщения на проверку:</h3>
@@ -42,18 +40,14 @@
             try {
                 const res = await fetch(API, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Action': 'get_pending'
-                    },
-                    body: JSON.stringify({ password: PASSWORD })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get_pending', password: PASSWORD })
                 });
                 if (res.ok) {
                     document.getElementById('login').classList.remove('active');
                     document.getElementById('panel').classList.add('active');
                     loadPending();
                 } else {
-                    const err = await res.text();
                     document.getElementById('loginError').textContent = 'Неверный пароль (ошибка ' + res.status + ')';
                 }
             } catch (e) {
@@ -72,11 +66,8 @@
             try {
                 const res = await fetch(API, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Action': 'get_pending'
-                    },
-                    body: JSON.stringify({ password: PASSWORD })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get_pending', password: PASSWORD })
                 });
                 if (!res.ok) { logout(); return; }
                 const messages = await res.json();
@@ -100,11 +91,8 @@
         async function approve(id) {
             await fetch(API, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Action': 'approve'
-                },
-                body: JSON.stringify({ id, password: PASSWORD })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'approve', id, password: PASSWORD })
             });
             document.getElementById('msg-' + id)?.remove();
         }
@@ -112,11 +100,8 @@
         async function reject(id) {
             await fetch(API, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Action': 'reject'
-                },
-                body: JSON.stringify({ id, password: PASSWORD })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'reject', id, password: PASSWORD })
             });
             document.getElementById('msg-' + id)?.remove();
         }
