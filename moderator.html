@@ -48,7 +48,6 @@
                     document.getElementById('login').classList.remove('active');
                     document.getElementById('panel').classList.add('active');
                     loadPending();
-                    // Запускаем автоматическое обновление каждые 3 секунды
                     if (refreshInterval) clearInterval(refreshInterval);
                     refreshInterval = setInterval(loadPending, 3000);
                 } else {
@@ -83,9 +82,9 @@
                     const div = document.createElement('div');
                     div.className = 'msg';
                     div.id = 'msg-' + msg.id;
+                    // используем combined
                     div.innerHTML = `
-                        <strong>${escapeHtml(msg.name)}</strong><br>
-                        ${escapeHtml(msg.text)}<br>
+                        <div style="margin-bottom: 8px;">${escapeHtml(msg.combined)}</div>
                         <button class="approve-btn" onclick="approve('${msg.id}')">✅ Одобрить</button>
                         <button class="reject-btn" onclick="reject('${msg.id}')">❌ Отклонить</button>
                     `;
