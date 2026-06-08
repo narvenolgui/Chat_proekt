@@ -66,14 +66,6 @@
             box-shadow: 0 2px 8px rgba(0, 229, 255, 0.2);
             color: #e0e0e0;
         }
-        .message .author {
-            font-weight: 600;
-            font-size: 0.8em;
-            margin-bottom: 4px;
-            display: block;
-            color: #00e5ff;
-            text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
-        }
         .message .text {
             font-size: 1em;
             color: #f0f0f0;
@@ -205,7 +197,6 @@
 
 <script>
     const API = 'https://functions.yandexcloud.net/d4esbgem029443pgug0u';
-
     const emojiBtn = document.getElementById('emojiBtn');
     const emojiPicker = document.getElementById('emojiPicker');
     const messageInput = document.getElementById('messageInput');
@@ -238,21 +229,23 @@
                 const div = document.createElement('div');
                 div.className = 'message received';
                 const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : '';
+                // используется combined
                 div.innerHTML = `
-                    <span class="author">${escapeHtml(msg.name)}</span>
-                    <span class="text">${escapeHtml(msg.text)}</span>
+                    <span class="text">${escapeHtml(msg.combined)}</span>
                     <span class="time">${time}</span>
                 `;
                 chat.appendChild(div);
             });
             chat.scrollTop = chat.scrollHeight;
-        } catch(e) {}
+        } catch(e) {
+            console.error(e);
+        }
     }
 
     async function sendMessage() {
         const name = document.getElementById('nameInput').value.trim();
         const text = messageInput.value.trim();
-        if (!name || !text) return;  // просто ничего не делаем, если пусто
+        if (!name || !text) return;
         try {
             const res = await fetch(API + '?path=/send', {
                 method: 'POST',
@@ -260,13 +253,11 @@
                 body: JSON.stringify({ name, text })
             });
             if (res.ok) {
-                messageInput.value = '';  // очищаем поле
+                messageInput.value = '';
                 emojiPicker.style.display = 'none';
-                // статус-сообщение не показываем
             }
-            // если ошибка — тоже молча, чтобы не смущать
         } catch (e) {
-            // тихо
+            console.error(e);
         }
     }
 
