@@ -252,7 +252,9 @@
 
     async function loadApproved() {
         try {
-            const res = await fetch(API + '?path=/get_approved');
+            const res = await fetch(API, {
+                headers: { 'X-Action': 'get_approved' }
+            });
             const messages = await res.json();
             const chat = document.getElementById('chat');
             chat.innerHTML = '';
@@ -280,9 +282,12 @@
             return;
         }
         try {
-            const res = await fetch(API + '?path=/send', {
+            const res = await fetch(API, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Action': 'send'
+                },
                 body: JSON.stringify({ name, text })
             });
             if (res.ok) {
