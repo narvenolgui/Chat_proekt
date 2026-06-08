@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌈 Наш весёлый чат</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 700px;
+        }
+        .header {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #fdfbf7;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            position: relative;
+        }
+        .message.received {
+            align-self: flex-start;
+            background: #ffffff;
+            border: 2px solid #ffd1dc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .message.sent {
+            align-self: flex-end;
+            background: #e0f7fa;
+            border: 2px solid #b2ebf2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .author {
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .text {
+            font-size: 1em;
+            line-height: 1.3;
+        }
+        .time {
+            font-size: 0.7em;
+            color: #999;
+            margin-top: 5px;
+            display: block;
+            text-align: right;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            background: #fff0f5;
+            gap: 10px;
+        }
+        .name-row {
+            display: flex;
+            gap: 10px;
+        }
+        .name-row input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #ffb6c1;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: 0.3s;
+        }
+        .name-row input:focus {
+            border-color: #ff69b4;
+        }
+        .msg-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .msg-row textarea {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #ffb6c1;
+            border-radius: 25px;
+            font-size: 1em;
+            resize: none;
+            outline: none;
+            height: 50px;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+        .msg-row textarea:focus {
+            border-color: #ff69b4;
+        }
+        .emoji-btn {
+            background: #ffd93e;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emoji-btn:hover {
+            transform: scale(1.1);
+            background: #ffc107;
+        }
+        .send-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            color: white;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(245,87,108,0.3);
+        }
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(245,87,108,0.4);
+        }
+        .emoji-picker {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-top: 5px;
+        }
+        .emoji-picker span {
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .emoji-picker span:hover {
+            transform: scale(1.3);
+        }
+        .status-msg {
+            text-align: center;
+            font-style: italic;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        🌈 Наш весёлый чат 🦄
+    </div>
+    <div class="chat-area" id="chat"></div>
+    <div class="input-area">
+        <div class="name-row">
+            <input type="text" id="nameInput" placeholder="🐻 Твоё имя">
+        </div>
+        <div class="msg-row">
+            <textarea id="messageInput" placeholder="Напиши сообщение... ✨"></textarea>
+            <button class="emoji-btn" id="emojiBtn">😊</button>
+            <button class="send-btn" onclick="sendMessage()">Отправить</button>
+        </div>
+        <div class="emoji-picker" id="emojiPicker">
+            <!-- Популярные эмодзи для детей -->
+            <span>😀</span><span>😂</span><span>🥰</span><span>😍</span><span>🤩</span>
+            <span>😎</span><span>🥳</span><span>😇</span><span>🤗</span><span>😋</span>
+            <span>🐶</span><span>🐱</span><span>🦊</span><span>🐼</span><span>🐨</span>
+            <span>🦄</span><span>🌈</span><span>⭐</span><span>❤️</span><span>💖</span>
+            <span>🎉</span><span>🎈</span><span>🍕</span><span>🍦</span><span>🍭</span>
+        </div>
+        <div id="status" class="status-msg"></div>
+    </div>
+</div>
+
+<script>
+    const API = 'https://functions.yandexcloud.net/d4esbgem029443pgug0u';
+
+    // Эмодзи-панель
+    const emojiBtn = document.getElementById('emojiBtn');
+    const emojiPicker = document.getElementById('emojiPicker');
+    const messageInput = document.getElementById('messageInput');
+
+    emojiBtn.addEventListener('click', () => {
+        emojiPicker.style.display = emojiPicker.style.display === 'flex' ? 'none' : 'flex';
+    });
+
+    emojiPicker.addEventListener('click', (e) => {
+        if (e.target.tagName === 'SPAN') {
+            messageInput.value += e.target.textContent;
+            emojiPicker.style.display = 'none';
+            messageInput.focus();
+        }
+    });
+
+    // Скрыть панель эмодзи при клике вне её
+    document.addEventListener('click', (e) => {
+        if (!emojiBtn.contains(e.target) && !emojiPicker.contains(e.target)) {
+            emojiPicker.style.display = 'none';
+        }
+    });
+
+    async function loadApproved() {
+        try {
+            const res = await fetch(API + '?path=/get_approved');
+            const messages = await res.json();
+            const chat = document.getElementById('chat');
+            chat.innerHTML = '';
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'message received'; // Все отображаются как "полученные", так как это одобренные
+                const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : '';
+                div.innerHTML = `
+                    <span class="author">${escapeHtml(msg.name)}</span>
+                    <span class="text">${escapeHtml(msg.text)}</span>
+                    <span class="time">${time}</span>
+                `;
+                chat.appendChild(div);
+            });
+            chat.scrollTop = chat.scrollHeight;
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    async function sendMessage() {
+        const name = document.getElementById('nameInput').value.trim();
+        const text = messageInput.value.trim();
+        const statusEl = document.getElementById('status');
+        if (!name || !text) {
+            statusEl.textContent = '🙏 Введи имя и сообщение!';
+            return;
+        }
+        try {
+            const res = await fetch(API + '?path=/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, text })
+            });
+            if (res.ok) {
+                statusEl.textContent = '✅ Отправлено на проверку! Скоро появится.';
+                messageInput.value = '';
+                emojiPicker.style.display = 'none';
+            } else {
+                statusEl.textContent = '❌ Ошибка при отправке';
+            }
+        } catch (e) {
+            statusEl.textContent = '❌ Нет связи с сервером';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Обновляем чат каждые 3 секунды
+    setInterval(loadApproved, 3000);
+    loadApproved();
+</script>
+</body>
+</html>
