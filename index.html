@@ -98,7 +98,7 @@
             gap: 8px;
         }
         .name-row input {
-            width: 55%;   /* короткое поле */
+            width: 55%;
             padding: 8px 15px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(0, 229, 255, 0.4);
@@ -127,7 +127,7 @@
             color: #fff;
             resize: none;
             outline: none;
-            height: 80px;   /* высокое поле */
+            height: 80px;
             transition: 0.3s;
             font-family: inherit;
         }
@@ -178,12 +178,6 @@
             font-size: 1.3em;
             cursor: pointer;
         }
-        .status-msg {
-            text-align: center;
-            font-size: 0.85em;
-            color: #00e5ff;
-            font-weight: 500;
-        }
     </style>
 </head>
 <body>
@@ -206,7 +200,6 @@
             <span>🖤</span><span>💜</span><span>💙</span><span>💚</span><span>❤️</span>
             <span>👍</span><span>👏</span><span>🙌</span><span>🤝</span><span>💪</span>
         </div>
-        <div id="status" class="status-msg"></div>
     </div>
 </div>
 
@@ -259,11 +252,7 @@
     async function sendMessage() {
         const name = document.getElementById('nameInput').value.trim();
         const text = messageInput.value.trim();
-        const statusEl = document.getElementById('status');
-        if (!name || !text) {
-            statusEl.textContent = 'Введи ник и сообщение';
-            return;
-        }
+        if (!name || !text) return;  // просто ничего не делаем, если пусто
         try {
             const res = await fetch(API + '?path=/send', {
                 method: 'POST',
@@ -271,14 +260,13 @@
                 body: JSON.stringify({ name, text })
             });
             if (res.ok) {
-                statusEl.textContent = 'Отправлено на проверку';
-                messageInput.value = '';
+                messageInput.value = '';  // очищаем поле
                 emojiPicker.style.display = 'none';
-            } else {
-                statusEl.textContent = 'Ошибка отправки';
+                // статус-сообщение не показываем
             }
+            // если ошибка — тоже молча, чтобы не смущать
         } catch (e) {
-            statusEl.textContent = 'Нет связи';
+            // тихо
         }
     }
 
