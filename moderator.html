@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Модерация чата</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background: #1a1a2e; color: #e0e0e0; }
-        .msg { border: 1px solid #00e5ff44; padding: 10px; margin: 10px 0; background: #16213e; border-radius: 12px; }
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; background: #1e1e2f; color: #e0e0e0; }
+        .msg { border: 1px solid #00e5ff44; padding: 10px; margin: 10px 0; background: #2a2a40; border-radius: 12px; }
         button { margin-right: 5px; padding: 8px 16px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .approve-btn { background: #00e5ff; color: #000; }
         .reject-btn { background: #ff4477; color: #fff; }
         button:hover { opacity: 0.8; transform: scale(1.02); }
-        input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; background: #16213e; border: 1px solid #00e5ff44; color: #fff; border-radius: 20px; }
+        input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; background: #2a2a40; border: 1px solid #00e5ff44; color: #fff; border-radius: 20px; }
         #login, #panel { display: none; }
         .active { display: block !important; }
     </style>
@@ -33,6 +33,7 @@
     <script>
         const API = 'https://functions.yandexcloud.net/d4esbgem029443pgug0u';
         let PASSWORD = '';
+        let refreshInterval = null;
 
         async function login() {
             PASSWORD = document.getElementById('password').value.trim();
@@ -47,6 +48,9 @@
                     document.getElementById('login').classList.remove('active');
                     document.getElementById('panel').classList.add('active');
                     loadPending();
+                    // Запускаем автоматическое обновление каждые 3 секунды
+                    if (refreshInterval) clearInterval(refreshInterval);
+                    refreshInterval = setInterval(loadPending, 3000);
                 } else {
                     document.getElementById('loginError').textContent = 'Неверный пароль (ошибка ' + res.status + ')';
                 }
@@ -57,6 +61,8 @@
 
         function logout() {
             PASSWORD = '';
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = null;
             document.getElementById('panel').classList.remove('active');
             document.getElementById('login').classList.add('active');
             document.getElementById('password').value = '';
