@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Чат</title>
     <style>
+        /* Стили те же, что и раньше, только добавлены кнопки регистрации/выхода */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -60,14 +61,35 @@
             border-top: 1px solid rgba(0, 229, 255, 0.2);
             display: flex; flex-direction: column; gap: 8px;
         }
-        .name-row input {
-            width: 55%; padding: 8px 15px;
+        /* Стили для блока регистрации */
+        .register-row {
+            display: flex; gap: 10px; align-items: center;
+        }
+        .register-row input {
+            flex: 1; padding: 10px 15px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(0, 229, 255, 0.4);
-            border-radius: 20px; font-size: 0.9em; color: #fff;
+            border-radius: 20px; font-size: 0.95em; color: #fff;
             outline: none; transition: 0.3s;
         }
-        .name-row input:focus { border-color: #00e5ff; box-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
+        .register-row input:focus { border-color: #00e5ff; box-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
+        .register-row button {
+            background: #00e5ff; border: none; border-radius: 25px;
+            padding: 10px 20px; color: #0a0a1a; font-weight: 700;
+            font-size: 0.95em; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+            white-space: nowrap;
+        }
+        /* Блок с ником и выходом */
+        .user-row {
+            display: flex; justify-content: space-between; align-items: center;
+            color: #00e5ff; font-weight: 600; margin-bottom: 4px;
+        }
+        .user-row button {
+            background: rgba(255, 68, 119, 0.9); border: none; border-radius: 15px;
+            padding: 5px 15px; color: #fff; font-weight: 600; cursor: pointer;
+            transition: 0.2s; font-size: 0.85em;
+        }
         .msg-row { display: flex; gap: 10px; align-items: stretch; }
         .msg-row textarea {
             flex: 1; padding: 10px 15px;
@@ -106,9 +128,21 @@
     <div class="header">▼ CHAT ROOM</div>
     <div class="chat-area" id="chat"></div>
     <div class="input-area">
-        <div class="name-row">
-            <input type="text" id="nameInput" placeholder="Твой ник">
+        <!-- Блок регистрации (виден, если ник не сохранён) -->
+        <div id="registerBlock" class="register-row">
+            <input type="text" id="registerInput" placeholder="Придумай ник">
+            <button onclick="register()">Войти в чат</button>
         </div>
+
+        <!-- Блок с ником и кнопкой выхода (виден после регистрации) -->
+        <div id="userBlock" style="display: none;">
+            <div class="user-row">
+                <span id="currentNick"></span>
+                <button onclick="logout()">Выйти</button>
+            </div>
+        </div>
+
+        <!-- Поле ввода сообщения и эмодзи -->
         <div class="msg-row">
             <textarea id="messageInput" placeholder="Сообщение..."></textarea>
             <button class="emoji-btn" id="emojiBtn">😎</button>
@@ -129,7 +163,42 @@
     const emojiBtn = document.getElementById('emojiBtn');
     const emojiPicker = document.getElementById('emojiPicker');
     const messageInput = document.getElementById('messageInput');
+    const registerBlock = document.getElementById('registerBlock');
+    const userBlock = document.getElementById('userBlock');
+    const currentNickSpan = document.getElementById('currentNick');
+    const registerInput = document.getElementById('registerInput');
 
+    // Проверяем, сохранён ли ник в localStorage
+    let myNick = localStorage.getItem('chatNick');
+
+    if (myNick) {
+        // Ник уже сохранён – сразу показываем чат
+        registerBlock.style.display = 'none';
+        userBlock.style.display = 'block';
+        currentNickSpan.textContent = myNick;
+    }
+
+    // Функция "регистрации"
+    function register() {
+        const nick = registerInput.value.trim();
+        if (!nick) return;
+        myNick = nick;
+        localStorage.setItem('chatNick', nick);   // сохраняем в браузере
+        registerBlock.style.display = 'none';
+        userBlock.style.display = 'block';
+        currentNickSpan.textContent = myNick;
+    }
+
+    // Функция выхода (сброс ника)
+    function logout() {
+        localStorage.removeItem('chatNick');
+        myNick = null;
+        registerBlock.style.display = 'flex';
+        userBlock.style.display = 'none';
+        registerInput.value = '';
+    }
+
+    // Обработчики эмодзи (без изменений)
     emojiBtn.addEventListener('click', () => {
         emojiPicker.style.display = emojiPicker.style.display === 'flex' ? 'none' : 'flex';
     });
@@ -146,6 +215,7 @@
         }
     });
 
+    // Загрузка одобренных сообщений
     async function loadApproved() {
         try {
             const res = await fetch(API + '?path=/get_approved');
@@ -156,7 +226,6 @@
                 const div = document.createElement('div');
                 div.className = 'message received';
                 const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : '';
-                // ТОЛЬКО combined
                 div.innerHTML = `
                     <span class="text">${escapeHtml(msg.combined)}</span>
                     <span class="time">${time}</span>
@@ -167,15 +236,19 @@
         } catch(e) {}
     }
 
+    // Отправка сообщения
     async function sendMessage() {
-        const name = document.getElementById('nameInput').value.trim();
+        if (!myNick) {
+            alert('Сначала войдите, указав ник!');
+            return;
+        }
         const text = messageInput.value.trim();
-        if (!name || !text) return;
+        if (!text) return;
         try {
             const res = await fetch(API + '?path=/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, text })
+                body: JSON.stringify({ name: myNick, text })
             });
             if (res.ok) {
                 messageInput.value = '';
