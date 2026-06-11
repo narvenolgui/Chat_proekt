@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Чат</title>
     <style>
-        /* Стили те же, что и раньше, только добавлены кнопки регистрации/выхода */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -61,25 +60,24 @@
             border-top: 1px solid rgba(0, 229, 255, 0.2);
             display: flex; flex-direction: column; gap: 8px;
         }
-        /* Стили для блока регистрации */
-        .register-row {
-            display: flex; gap: 10px; align-items: center;
+        /* Форма регистрации */
+        .register-block {
+            display: flex; flex-direction: column; gap: 8px;
         }
-        .register-row input {
-            flex: 1; padding: 10px 15px;
+        .register-block input {
+            padding: 10px 15px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(0, 229, 255, 0.4);
             border-radius: 20px; font-size: 0.95em; color: #fff;
             outline: none; transition: 0.3s;
         }
-        .register-row input:focus { border-color: #00e5ff; box-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
-        .register-row button {
+        .register-block button {
             background: #00e5ff; border: none; border-radius: 25px;
             padding: 10px 20px; color: #0a0a1a; font-weight: 700;
             font-size: 0.95em; cursor: pointer; transition: 0.3s;
             box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
-            white-space: nowrap;
         }
+        .error-msg { color: #ff4477; font-size: 0.85em; text-align: center; }
         /* Блок с ником и выходом */
         .user-row {
             display: flex; justify-content: space-between; align-items: center;
@@ -128,74 +126,95 @@
     <div class="header">▼ CHAT ROOM</div>
     <div class="chat-area" id="chat"></div>
     <div class="input-area">
-        <!-- Блок регистрации (виден, если ник не сохранён) -->
-        <div id="registerBlock" class="register-row">
-            <input type="text" id="registerInput" placeholder="Придумай ник">
+        <!-- Форма регистрации (видна, пока не пройдена проверка) -->
+        <div id="registerBlock" class="register-block">
+            <input type="text" id="regNick" placeholder="Твой ник">
+            <input type="text" id="regCode" placeholder="Кодовое слово">
             <button onclick="register()">Войти в чат</button>
+            <div id="regError" class="error-msg"></div>
         </div>
 
-        <!-- Блок с ником и кнопкой выхода (виден после регистрации) -->
-        <div id="userBlock" style="display: none;">
+        <!-- Блок, появляющийся после успешной регистрации -->
+        <div id="chatBlock" style="display: none;">
             <div class="user-row">
                 <span id="currentNick"></span>
                 <button onclick="logout()">Выйти</button>
             </div>
-        </div>
-
-        <!-- Поле ввода сообщения и эмодзи -->
-        <div class="msg-row">
-            <textarea id="messageInput" placeholder="Сообщение..."></textarea>
-            <button class="emoji-btn" id="emojiBtn">😎</button>
-            <button class="send-btn" onclick="sendMessage()">Отправить</button>
-        </div>
-        <div class="emoji-picker" id="emojiPicker">
-            <span>😀</span><span>😂</span><span>🤣</span><span>😎</span><span>🔥</span>
-            <span>💯</span><span>✨</span><span>🌟</span><span>💻</span><span>🎧</span>
-            <span>🚀</span><span>🎮</span><span>👾</span><span>🕹️</span><span>📱</span>
-            <span>🖤</span><span>💜</span><span>💙</span><span>💚</span><span>❤️</span>
-            <span>👍</span><span>👏</span><span>🙌</span><span>🤝</span><span>💪</span>
+            <div class="msg-row">
+                <textarea id="messageInput" placeholder="Сообщение..."></textarea>
+                <button class="emoji-btn" id="emojiBtn">😎</button>
+                <button class="send-btn" onclick="sendMessage()">Отправить</button>
+            </div>
+            <div class="emoji-picker" id="emojiPicker">
+                <span>😀</span><span>😂</span><span>🤣</span><span>😎</span><span>🔥</span>
+                <span>💯</span><span>✨</span><span>🌟</span><span>💻</span><span>🎧</span>
+                <span>🚀</span><span>🎮</span><span>👾</span><span>🕹️</span><span>📱</span>
+                <span>🖤</span><span>💜</span><span>💙</span><span>💚</span><span>❤️</span>
+                <span>👍</span><span>👏</span><span>🙌</span><span>🤝</span><span>💪</span>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     const API = 'https://functions.yandexcloud.net/d4esbgem029443pgug0u';
+    const registerBlock = document.getElementById('registerBlock');
+    const chatBlock = document.getElementById('chatBlock');
+    const regNick = document.getElementById('regNick');
+    const regCode = document.getElementById('regCode');
+    const regError = document.getElementById('regError');
+    const currentNickSpan = document.getElementById('currentNick');
+    const messageInput = document.getElementById('messageInput');
     const emojiBtn = document.getElementById('emojiBtn');
     const emojiPicker = document.getElementById('emojiPicker');
-    const messageInput = document.getElementById('messageInput');
-    const registerBlock = document.getElementById('registerBlock');
-    const userBlock = document.getElementById('userBlock');
-    const currentNickSpan = document.getElementById('currentNick');
-    const registerInput = document.getElementById('registerInput');
 
-    // Проверяем, сохранён ли ник в localStorage
+    // Проверяем, не сохранён ли ник в localStorage (после успешной регистрации)
     let myNick = localStorage.getItem('chatNick');
-
     if (myNick) {
-        // Ник уже сохранён – сразу показываем чат
         registerBlock.style.display = 'none';
-        userBlock.style.display = 'block';
+        chatBlock.style.display = 'block';
         currentNickSpan.textContent = myNick;
     }
 
-    // Функция "регистрации"
-    function register() {
-        const nick = registerInput.value.trim();
-        if (!nick) return;
-        myNick = nick;
-        localStorage.setItem('chatNick', nick);   // сохраняем в браузере
-        registerBlock.style.display = 'none';
-        userBlock.style.display = 'block';
-        currentNickSpan.textContent = myNick;
+    // Функция регистрации
+    async function register() {
+        const nick = regNick.value.trim();
+        const code = regCode.value.trim();
+        if (!nick || !code) {
+            regError.textContent = 'Заполни оба поля';
+            return;
+        }
+        try {
+            const res = await fetch(API + '?path=/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: nick, code: code })
+            });
+            if (res.ok) {
+                // Успех: сохраняем ник, показываем чат
+                localStorage.setItem('chatNick', nick);
+                myNick = nick;
+                registerBlock.style.display = 'none';
+                chatBlock.style.display = 'block';
+                currentNickSpan.textContent = nick;
+                regError.textContent = '';
+            } else {
+                const msg = await res.text();
+                regError.textContent = msg || 'Неверный ник или кодовое слово';
+            }
+        } catch (e) {
+            regError.textContent = 'Ошибка соединения';
+        }
     }
 
-    // Функция выхода (сброс ника)
+    // Выход из чата
     function logout() {
         localStorage.removeItem('chatNick');
         myNick = null;
         registerBlock.style.display = 'flex';
-        userBlock.style.display = 'none';
-        registerInput.value = '';
+        chatBlock.style.display = 'none';
+        regNick.value = '';
+        regCode.value = '';
     }
 
     // Обработчики эмодзи (без изменений)
@@ -236,10 +255,10 @@
         } catch(e) {}
     }
 
-    // Отправка сообщения
+    // Отправка сообщения (ник уже гарантированно верный)
     async function sendMessage() {
         if (!myNick) {
-            alert('Сначала войдите, указав ник!');
+            alert('Сначала войдите!');
             return;
         }
         const text = messageInput.value.trim();
